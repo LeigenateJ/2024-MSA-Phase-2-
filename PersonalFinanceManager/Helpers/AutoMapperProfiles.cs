@@ -11,7 +11,7 @@ namespace PersonalFinanceManager.Helpers
         {
             CreateMap<Account, AccountDto>().ReverseMap();
             CreateMap<Transaction, TransactionDto>().ReverseMap();
-            CreateMap<User, UserDto>().ReverseMap();
+            CreateMap<User, RegisterUserDto>().ReverseMap();
         }
     }
 }

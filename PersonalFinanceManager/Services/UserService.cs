@@ -18,7 +18,7 @@ namespace PersonalFinanceManager.Services
             _mapper = mapper;
         }
 
-        public async Task<bool> RegisterAsync(UserDto userDto)
+        public async Task<bool> RegisterAsync(RegisterUserDto userDto)
         {
             var user = await _userRepository.GetAllAsync()
                                             .Result
@@ -47,5 +47,22 @@ namespace PersonalFinanceManager.Services
 
             return user;
         }
+
+        public async Task<bool> UpdateUserAsync(Guid id, UpdateUserDto updateUserDto)
+        {
+            var user = await _userRepository.GetByIdAsync(id);
+            if (user == null)
+            {
+                return false; // 用户不存在
+            }
+
+            // 更新用户信息
+            user.Email = updateUserDto.Email ?? user.Email;
+            user.Role = updateUserDto.Role ?? user.Role;
+
+            await _userRepository.UpdateAsync(user);
+            return true;
+        }
+
     }
 }

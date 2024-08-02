@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using PersonalFinanceManager.Services;
-using PersonalFinanceManager.Models;
 using PersonalFinanceManager.Dtos;
 using System;
 using System.Collections.Generic;
@@ -22,56 +21,100 @@ namespace PersonalFinanceManager.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<TransactionDto>>> GetTransactions()
         {
-            var transactions = await _transactionService.GetTransactionsAsync();
-            return Ok(transactions);
+            try
+            {
+                var transactions = await _transactionService.GetTransactionsAsync();
+                return Ok(transactions);
+            }
+            catch (Exception ex)
+            {
+                // _logger.LogError(ex, "An error occurred while fetching transactions.");
+                return StatusCode(500, "Internal server error.");
+            }
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<TransactionDto>> GetTransaction(Guid id)
         {
-            var transaction = await _transactionService.GetTransactionByIdAsync(id);
-            if (transaction == null)
+            try
             {
-                return NotFound();
+                var transaction = await _transactionService.GetTransactionByIdAsync(id);
+                if (transaction == null)
+                {
+                    return NotFound();
+                }
+                return Ok(transaction);
             }
-            return Ok(transaction);
+            catch (Exception ex)
+            {
+                // _logger.LogError(ex, "An error occurred while fetching the transaction.");
+                return StatusCode(500, "Internal server error.");
+            }
         }
 
         [HttpPost]
-        public async Task<ActionResult<TransactionDto>> CreateTransaction(TransactionDto transactionDto)
+        public async Task<ActionResult<TransactionDto>> CreateTransaction([FromBody] TransactionDto transactionDto)
         {
-            var transaction = await _transactionService.CreateTransactionAsync(transactionDto);
-            return CreatedAtAction(nameof(GetTransaction), new { id = transaction.Id }, transaction);
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var transaction = await _transactionService.CreateTransactionAsync(transactionDto);
+                return CreatedAtAction(nameof(GetTransaction), new { id = transaction.Id }, transaction);
+            }
+            catch (Exception ex)
+            {
+                // _logger.LogError(ex, "An error occurred while creating the transaction.");
+                return StatusCode(500, "Internal server error.");
+            }
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateTransaction(Guid id, TransactionDto transactionDto)
+        public async Task<IActionResult> UpdateTransaction(Guid id, [FromBody] TransactionDto transactionDto)
         {
             if (id != transactionDto.Id)
             {
                 return BadRequest();
             }
 
-            var result = await _transactionService.UpdateTransactionAsync(id, transactionDto);
-            if (!result)
+            try
             {
-                return NotFound();
-            }
+                var result = await _transactionService.UpdateTransactionAsync(id, transactionDto);
+                if (!result)
+                {
+                    return NotFound();
+                }
 
-            return NoContent();
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                // _logger.LogError(ex, "An error occurred while updating the transaction.");
+                return StatusCode(500, "Internal server error.");
+            }
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTransaction(Guid id)
         {
-            var result = await _transactionService.DeleteTransactionAsync(id);
-            if (!result)
+            try
             {
-                return NotFound();
-            }
+                var result = await _transactionService.DeleteTransactionAsync(id);
+                if (!result)
+                {
+                    return NotFound();
+                }
 
-            return NoContent();
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                // _logger.LogError(ex, "An error occurred while deleting the transaction.");
+                return StatusCode(500, "Internal server error.");
+            }
         }
     }
 }
-
