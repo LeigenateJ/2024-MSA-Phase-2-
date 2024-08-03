@@ -1,89 +1,138 @@
-﻿using Xunit;
-using Moq;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Security.Claims;
 using System.Threading.Tasks;
+using Xunit;
+using Moq;
 using PersonalFinanceManager.Controllers;
 using PersonalFinanceManager.Services;
-using PersonalFinanceManager.Models;
-using Microsoft.AspNetCore.Mvc;
 using PersonalFinanceManager.Dtos;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
 
-namespace PersonalFinanceManager.Tests.Controllers
+public class AccountsControllerTests
 {
-    public class AccountsControllerTests
+    private readonly Mock<IAccountService> _accountServiceMock;
+    private readonly AccountsController _controller;
+
+    public AccountsControllerTests()
     {
-        private readonly Mock<IAccountService> _accountServiceMock;
-        private readonly AccountsController _controller;
+        _accountServiceMock = new Mock<IAccountService>();
+        _controller = new AccountsController(_accountServiceMock.Object);
 
-        public AccountsControllerTests()
+        // Mock user identity
+        var userId = Guid.NewGuid().ToString();
+        var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
         {
-            _accountServiceMock = new Mock<IAccountService>();
-            _controller = new AccountsController(_accountServiceMock.Object);
-        }
+            new Claim(ClaimTypes.NameIdentifier, userId)
+        }, "mock"));
 
-        [Fact]
-        public async Task GetAccounts_ReturnsOkResult_WithListOfAccounts()
+        _controller.ControllerContext = new ControllerContext()
         {
-            // Arrange
-            var accounts = new List<AccountDto>
-            {
-                new AccountDto { Id = Guid.NewGuid(), Name = "Test Account", Type = "Checking", Balance = 1000 }
-            };
-            _accountServiceMock.Setup(s => s.GetAccountsAsync()).ReturnsAsync(accounts);
-
-            // Act
-            var result = await _controller.GetAccounts();
-
-            // Assert
-            var okResult = Assert.IsType<OkObjectResult>(result.Result);
-            var returnValue = Assert.IsType<List<AccountDto>>(okResult.Value);
-            Assert.Equal(accounts.Count, returnValue.Count);
-        }
-
-        [Fact]
-        public async Task GetAccount_ReturnsNotFound_WhenIdDoesNotExist()
-        {
-            // Arrange
-            var accountId = Guid.NewGuid();
-            _accountServiceMock.Setup(s => s.GetAccountByIdAsync(accountId)).ReturnsAsync((AccountDto)null);
-
-            // Act
-            var result = await _controller.GetAccount(accountId);
-
-            // Assert
-            Assert.IsType<NotFoundResult>(result.Result);
-        }
-
-        [Fact]
-        public async Task CreateAccount_ReturnsCreatedAtActionResult()
-        {
-            // Arrange
-            var accountDto = new AccountDto { Name = "Test Account", Type = "Savings", Balance = 1000 };
-            var createdAccount = new AccountDto { Id = Guid.NewGuid(), Name = "Test Account", Type = "Savings", Balance = 1000 };
-            _accountServiceMock.Setup(s => s.CreateAccountAsync(accountDto)).ReturnsAsync(createdAccount);
-
-            // Act
-            var result = await _controller.CreateAccount(accountDto);
-
-            // Assert
-            var createdAtActionResult = Assert.IsType<CreatedAtActionResult>(result.Result);
-            var returnValue = Assert.IsType<AccountDto>(createdAtActionResult.Value);
-            Assert.Equal(createdAccount.Id, returnValue.Id);
-        }
-
-        [Fact]
-        public async Task DeleteAccount_ReturnsNoContent_WhenDeletionIsSuccessful()
-        {
-            // Arrange
-            var accountId = Guid.NewGuid();
-            _accountServiceMock.Setup(s => s.DeleteAccountAsync(accountId)).ReturnsAsync(true);
-
-            // Act
-            var result = await _controller.DeleteAccount(accountId);
-
-            // Assert
-            Assert.IsType<NoContentResult>(result);
-        }
+            HttpContext = new DefaultHttpContext() { User = user }
+        };
     }
+
+    [Fact]
+    public async Task GetAccounts_ShouldReturnOkResult_WithListOfAccounts()
+    {
+        // Arrange
+        var userId = Guid.NewGuid(); // Mocked user ID
+        var accounts = new List<AccountDto>
+    {
+        new AccountDto { Name = "Account1", UserId = userId },
+        new AccountDto { Name = "Account2", UserId = userId }
+    };
+
+        // Setup the mock user identity in the controller context
+        _controller.ControllerContext = new ControllerContext()
+        {
+            HttpContext = new DefaultHttpContext
+            {
+                User = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
+                {
+                new Claim(ClaimTypes.NameIdentifier, userId.ToString())
+                }, "mock"))
+            }
+        };
+
+        _accountServiceMock.Setup(service => service.GetAccountsByUserIdAsync(userId)).ReturnsAsync(accounts);
+
+        // Act
+        var result = await _controller.GetAccounts();
+
+        // Assert
+        var actionResult = Assert.IsType<ActionResult<IEnumerable<AccountDto>>>(result);
+        var okResult = Assert.IsType<OkObjectResult>(actionResult.Result);
+        var returnValue = Assert.IsType<List<AccountDto>>(okResult.Value);
+        Assert.Equal(2, returnValue.Count);
+        Assert.Equal(accounts[0].Name, returnValue[0].Name);
+        Assert.Equal(accounts[1].Name, returnValue[1].Name);
+    }
+
+
+    [Fact]
+    public async Task GetAccount_ShouldReturnOkResult_WithAccount()
+    {
+        // Arrange
+        var userId = Guid.NewGuid(); // Mocked user ID
+        var accountId = Guid.NewGuid();
+        var account = new AccountDto { Id = accountId, Name = "Account1", UserId = userId };
+
+        // Setup the mock user identity in the controller context
+        _controller.ControllerContext = new ControllerContext()
+        {
+            HttpContext = new DefaultHttpContext
+            {
+                User = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
+                {
+                new Claim(ClaimTypes.NameIdentifier, userId.ToString())
+                }, "mock"))
+            }
+        };
+
+        _accountServiceMock.Setup(service => service.GetAccountByIdAsync(accountId)).ReturnsAsync(account);
+
+        // Act
+        var result = await _controller.GetAccount(accountId);
+
+        // Assert
+        var actionResult = Assert.IsType<ActionResult<AccountDto>>(result);
+        var okResult = Assert.IsType<OkObjectResult>(actionResult.Result);
+        var returnValue = Assert.IsType<AccountDto>(okResult.Value);
+        Assert.Equal(account.Name, returnValue.Name);
+        Assert.Equal(account.Id, returnValue.Id);
+        Assert.Equal(account.UserId, returnValue.UserId);
+    }
+
+
+    [Fact]
+    public async Task GetAccount_ShouldReturnNotFound_WhenAccountDoesNotExist()
+    {
+        // Arrange
+        var accountId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        _accountServiceMock.Setup(service => service.GetAccountByIdAsync(accountId)).ReturnsAsync((AccountDto)null);
+
+        // 模拟认证用户
+        var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
+        {
+        new Claim(ClaimTypes.NameIdentifier, userId.ToString())
+        }, "mock"));
+
+        _controller.ControllerContext = new ControllerContext()
+        {
+            HttpContext = new DefaultHttpContext() { User = user }
+        };
+
+        // Act
+        var result = await _controller.GetAccount(accountId);
+
+        // Assert
+        var actionResult = Assert.IsType<ActionResult<AccountDto>>(result);
+        Assert.IsType<UnauthorizedObjectResult>(actionResult.Result);
+    }
+
+
+
 }

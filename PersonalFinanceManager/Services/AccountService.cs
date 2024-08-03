@@ -20,15 +20,16 @@ namespace PersonalFinanceManager.Services
             _mapper = mapper;
         }
 
-        public async Task<IEnumerable<AccountDto>> GetAccountsAsync()
+        public async Task<IEnumerable<AccountDto>> GetAccountsByUserIdAsync(Guid userId)
         {
             var accounts = await _accountRepository.GetAllAsync();
-            return _mapper.Map<IEnumerable<AccountDto>>(accounts);
+            var userAccounts = accounts.Where(a => a.UserId == userId);
+            return _mapper.Map<IEnumerable<AccountDto>>(userAccounts);
         }
 
-        public async Task<AccountDto> GetAccountByIdAsync(Guid id)
+        public async Task<AccountDto> GetAccountByIdAsync(Guid accountId)
         {
-            var account = await _accountRepository.GetByIdAsync(id);
+            var account = await _accountRepository.GetByIdAsync(accountId);
             return _mapper.Map<AccountDto>(account);
         }
 

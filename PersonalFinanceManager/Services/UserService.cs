@@ -53,10 +53,10 @@ namespace PersonalFinanceManager.Services
             var user = await _userRepository.GetByIdAsync(id);
             if (user == null)
             {
-                return false; // 用户不存在
+                return false; 
             }
 
-            // 更新用户信息
+            user.Username = updateUserDto.Username ?? user.Username;
             user.Email = updateUserDto.Email ?? user.Email;
             user.Role = updateUserDto.Role ?? user.Role;
 

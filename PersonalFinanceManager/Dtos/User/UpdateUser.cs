@@ -2,6 +2,8 @@
 
 public class UpdateUserDto
 {
+    public string Username { get; set; }
+
     [EmailAddress(ErrorMessage = "Invalid email address format.")]
     public string Email { get; set; }
 

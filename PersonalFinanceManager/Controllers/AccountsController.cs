@@ -4,12 +4,14 @@ using PersonalFinanceManager.Dtos;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 
 namespace PersonalFinanceManager.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
-    public class AccountsController : ControllerBase
+    public class AccountsController : BaseController
     {
         private readonly IAccountService _accountService;
 
@@ -23,7 +25,14 @@ namespace PersonalFinanceManager.Controllers
         {
             try
             {
-                var accounts = await _accountService.GetAccountsAsync();
+                var userId = GetUserIdFromToken();
+                var accounts = await _accountService.GetAccountsByUserIdAsync(userId);
+
+                if (accounts == null || !accounts.Any())
+                {
+                    return NotFound(new { message = "No accounts found." });
+                }
+
                 return Ok(accounts);
             }
             catch (Exception ex)
@@ -38,11 +47,14 @@ namespace PersonalFinanceManager.Controllers
         {
             try
             {
+                var userId = GetUserIdFromToken();
                 var account = await _accountService.GetAccountByIdAsync(id);
-                if (account == null)
+
+                if (account == null || account.UserId != userId)
                 {
-                    return NotFound();
+                    return Unauthorized(new { message = "Access denied." });
                 }
+
                 return Ok(account);
             }
             catch (Exception ex)

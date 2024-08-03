@@ -7,9 +7,9 @@ namespace PersonalFinanceManager.Services
 {
     public interface ITransactionService
     {
-        Task<IEnumerable<TransactionDto>> GetTransactionsAsync();
-        Task<TransactionDto> GetTransactionByIdAsync(Guid id);
-        Task<TransactionDto> CreateTransactionAsync(TransactionDto transactionDto);
+        Task<IEnumerable<TransactionDto>> GetTransactionsByAccountIdAsync(Guid accountId);
+        Task<TransactionDto> GetTransactionByIdAsync(Guid transactionId);
+        Task<TransactionDto> AddTransactionAsync(TransactionDto transactionDto);
         Task<bool> UpdateTransactionAsync(Guid id, TransactionDto transactionDto);
         Task<bool> DeleteTransactionAsync(Guid id);
     }

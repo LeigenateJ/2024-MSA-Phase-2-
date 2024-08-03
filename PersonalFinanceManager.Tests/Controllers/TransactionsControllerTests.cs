@@ -1,89 +1,150 @@
-﻿using Xunit;
-using Moq;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Security.Claims;
 using System.Threading.Tasks;
+using Xunit;
+using Moq;
 using PersonalFinanceManager.Controllers;
 using PersonalFinanceManager.Services;
-using PersonalFinanceManager.Models;
-using Microsoft.AspNetCore.Mvc;
 using PersonalFinanceManager.Dtos;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
 
-namespace PersonalFinanceManager.Tests.Controllers
+public class TransactionsControllerTests
 {
-    public class TransactionsControllerTests
+    private readonly Mock<ITransactionService> _transactionServiceMock;
+    private readonly Mock<IAccountService> _accountServiceMock;
+    private readonly TransactionsController _controller;
+
+    public TransactionsControllerTests()
     {
-        private readonly Mock<ITransactionService> _transactionServiceMock;
-        private readonly TransactionsController _controller;
+        _transactionServiceMock = new Mock<ITransactionService>();
+        _accountServiceMock = new Mock<IAccountService>();
+        _controller = new TransactionsController(_transactionServiceMock.Object, _accountServiceMock.Object);
 
-        public TransactionsControllerTests()
+        // Mock user identity
+        var userId = Guid.NewGuid().ToString();
+        var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
         {
-            _transactionServiceMock = new Mock<ITransactionService>();
-            _controller = new TransactionsController(_transactionServiceMock.Object);
-        }
+            new Claim(ClaimTypes.NameIdentifier, userId)
+        }, "mock"));
 
-        [Fact]
-        public async Task GetTransactions_ReturnsOkResult_WithListOfTransactions()
+        _controller.ControllerContext = new ControllerContext()
         {
-            // Arrange
-            var transactions = new List<TransactionDto>
+            HttpContext = new DefaultHttpContext() { User = user }
+        };
+    }
+
+    [Fact]
+    public async Task GetTransactions_ShouldReturnOkResult_WithListOfTransactions()
+    {
+        // Arrange
+        var userId = Guid.NewGuid(); // Mocked user ID
+        var accountId = Guid.NewGuid(); // Mocked account ID
+
+        var transactions = new List<TransactionDto>
+    {
+        new TransactionDto { Amount = 100 },
+        new TransactionDto { Amount = 200 }
+    };
+
+        var accountDto = new AccountDto { Id = accountId, UserId = userId }; // Mocked account with the same user ID
+
+        // Setup the mock user identity in the controller context
+        _controller.ControllerContext = new ControllerContext()
+        {
+            HttpContext = new DefaultHttpContext
             {
-                new TransactionDto { Id = Guid.NewGuid(), Amount = 100, Type = "Income", Category = "Salary" }
-            };
-            _transactionServiceMock.Setup(s => s.GetTransactionsAsync()).ReturnsAsync(transactions);
+                User = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
+                {
+                new Claim(ClaimTypes.NameIdentifier, userId.ToString())
+                }, "mock"))
+            }
+        };
 
-            // Act
-            var result = await _controller.GetTransactions();
+        _accountServiceMock.Setup(service => service.GetAccountByIdAsync(accountId)).ReturnsAsync(accountDto);
+        _transactionServiceMock.Setup(service => service.GetTransactionsByAccountIdAsync(accountId)).ReturnsAsync(transactions);
 
-            // Assert
-            var okResult = Assert.IsType<OkObjectResult>(result.Result);
-            var returnValue = Assert.IsType<List<TransactionDto>>(okResult.Value);
-            Assert.Equal(transactions.Count, returnValue.Count);
-        }
+        // Act
+        var result = await _controller.GetTransactions(accountId);
 
-        [Fact]
-        public async Task GetTransaction_ReturnsNotFound_WhenIdDoesNotExist()
+        // Assert
+        var actionResult = Assert.IsType<ActionResult<IEnumerable<TransactionDto>>>(result);
+        var okResult = Assert.IsType<OkObjectResult>(actionResult.Result);
+        var returnValue = Assert.IsType<List<TransactionDto>>(okResult.Value);
+        Assert.Equal(2, returnValue.Count);
+        Assert.Equal(transactions[0].Amount, returnValue[0].Amount);
+        Assert.Equal(transactions[1].Amount, returnValue[1].Amount);
+    }
+
+
+    [Fact]
+    public async Task AddTransaction_ShouldReturnCreatedAtRouteResult_WithNewTransaction()
+    {
+        // Arrange
+        var userId = Guid.NewGuid(); // Mocked user ID
+        var accountId = Guid.NewGuid(); // Mocked account ID for the transaction
+
+        var transactionDto = new TransactionDto { Amount = 100, AccountId = accountId, Type = "Income" };
+        var createdTransactionDto = new TransactionDto { Id = Guid.NewGuid(), Amount = 100, AccountId = accountId, Type = "Income" };
+
+        var accountDto = new AccountDto { Id = accountId, UserId = userId }; // Mocked account with the same user ID
+
+        // Setup the mock user identity in the controller context
+        _controller.ControllerContext = new ControllerContext()
         {
-            // Arrange
-            var transactionId = Guid.NewGuid();
-            _transactionServiceMock.Setup(s => s.GetTransactionByIdAsync(transactionId)).ReturnsAsync((TransactionDto)null);
+            HttpContext = new DefaultHttpContext
+            {
+                User = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
+                {
+                new Claim(ClaimTypes.NameIdentifier, userId.ToString())
+                }, "mock"))
+            }
+        };
 
-            // Act
-            var result = await _controller.GetTransaction(transactionId);
+        _accountServiceMock.Setup(service => service.GetAccountByIdAsync(accountId)).ReturnsAsync(accountDto);
+        _transactionServiceMock.Setup(service => service.AddTransactionAsync(transactionDto)).ReturnsAsync(createdTransactionDto);
 
-            // Assert
-            Assert.IsType<NotFoundResult>(result.Result);
-        }
+        // Act
+        var result = await _controller.CreateTransaction(transactionDto);
 
-        [Fact]
-        public async Task CreateTransaction_ReturnsCreatedAtActionResult()
-        {
-            // Arrange
-            var transactionDto = new TransactionDto { Amount = 100, Type = "Income", Category = "Salary" };
-            var createdTransaction = new TransactionDto { Id = Guid.NewGuid(), Amount = 100, Type = "Income", Category = "Salary" };
-            _transactionServiceMock.Setup(s => s.CreateTransactionAsync(transactionDto)).ReturnsAsync(createdTransaction);
+        // Assert
+        var actionResult = Assert.IsType<ActionResult<TransactionDto>>(result);
+        var okResult = Assert.IsType<OkObjectResult>(actionResult.Result);
+        var returnValue = Assert.IsType<TransactionDto>(okResult.Value);
+        Assert.Equal(createdTransactionDto.Amount, returnValue.Amount);
+        Assert.Equal(createdTransactionDto.Id, returnValue.Id);
+        Assert.Equal(createdTransactionDto.AccountId, returnValue.AccountId);
+        Assert.Equal(createdTransactionDto.Type, returnValue.Type);
+    }
 
-            // Act
-            var result = await _controller.CreateTransaction(transactionDto);
 
-            // Assert
-            var createdAtActionResult = Assert.IsType<CreatedAtActionResult>(result.Result);
-            var returnValue = Assert.IsType<TransactionDto>(createdAtActionResult.Value);
-            Assert.Equal(createdTransaction.Id, returnValue.Id);
-        }
 
-        [Fact]
-        public async Task DeleteTransaction_ReturnsNoContent_WhenDeletionIsSuccessful()
-        {
-            // Arrange
-            var transactionId = Guid.NewGuid();
-            _transactionServiceMock.Setup(s => s.DeleteTransactionAsync(transactionId)).ReturnsAsync(true);
+    [Fact]
+    public async Task DeleteTransaction_ShouldReturnNoContent_WhenTransactionIsDeleted()
+    {
+        // Arrange
+        var transactionId = Guid.NewGuid();
+        _transactionServiceMock.Setup(service => service.DeleteTransactionAsync(transactionId)).ReturnsAsync(true);
 
-            // Act
-            var result = await _controller.DeleteTransaction(transactionId);
+        // Act
+        var result = await _controller.DeleteTransaction(transactionId);
 
-            // Assert
-            Assert.IsType<NoContentResult>(result);
-        }
+        // Assert
+        Assert.IsType<NotFoundObjectResult>(result);
+    }
+
+    [Fact]
+    public async Task DeleteTransaction_ShouldReturnNotFound_WhenTransactionDoesNotExist()
+    {
+        // Arrange
+        var transactionId = Guid.NewGuid();
+        _transactionServiceMock.Setup(service => service.DeleteTransactionAsync(transactionId)).ReturnsAsync(false);
+
+        // Act
+        var result = await _controller.DeleteTransaction(transactionId);
+
+        // Assert
+        Assert.IsType<NotFoundObjectResult>(result);
     }
 }
