@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import axiosInstance from '../../api/axiosInstance';
 import { fetchAccounts } from './accountSlice';
+import { logout } from './authSlice';
 
 interface Transaction {
   id: string;
@@ -91,6 +92,7 @@ const transactionsSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      .addCase(logout, () => initialState)
       .addCase(fetchTransactions.pending, (state) => {
         state.loading = true;
         state.error = null;

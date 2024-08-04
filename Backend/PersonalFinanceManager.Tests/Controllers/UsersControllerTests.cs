@@ -15,13 +15,15 @@ public class UsersControllerTests
 {
     private readonly Mock<IUserService> _userServiceMock;
     private readonly Mock<ITokenService> _tokenServiceMock;
+    private readonly Mock<ITransactionService> _transactionServiceMock;
     private readonly UsersController _controller;
 
     public UsersControllerTests()
     {
         _userServiceMock = new Mock<IUserService>();
         _tokenServiceMock = new Mock<ITokenService>();
-        _controller = new UsersController(_userServiceMock.Object, _tokenServiceMock.Object);
+        _transactionServiceMock = new Mock<ITransactionService>();
+        _controller = new UsersController(_userServiceMock.Object, _tokenServiceMock.Object, _transactionServiceMock.Object);
 
         // Mock user identity
         var userId = Guid.NewGuid().ToString();

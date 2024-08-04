@@ -55,7 +55,6 @@ const AddTransactionDialog: React.FC<AddTransactionDialogProps> = ({ open, onClo
   };
 
   const handleSave = () => {
-    console.log('Attempting to save transaction');
     if (accountId && amount !== null && type && category && date) {
       const now = new Date();
       const hours = String(now.getHours()).padStart(2, '0');
@@ -93,6 +92,7 @@ const AddTransactionDialog: React.FC<AddTransactionDialogProps> = ({ open, onClo
       onClose();
       dispatch(setCurrentTransaction(null)); 
     }
+    resetForm();
   };
 
   const handleClose = () => {
