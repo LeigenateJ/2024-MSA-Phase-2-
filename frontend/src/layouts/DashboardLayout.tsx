@@ -44,28 +44,28 @@ const DashboardLayout: React.FC<{ darkMode: boolean; toggleDarkMode: () => void 
       {isAuthenticated && (
         <List>
             <ListItem 
-            button 
-            onClick={() => handleNavigation('/dashboard')}
-            sx={{ justifyContent: 'center' }}
+                button 
+                onClick={() => handleNavigation('/dashboard')}
+                sx={{ justifyContent: 'center' }}
             >
-            <DashboardIcon sx={{ marginLeft: 3, marginRight: 5 }} />
-            <ListItemText primary="Dashboard" />
+                <DashboardIcon sx={{ marginLeft: 3, marginRight: 5 }} />
+                <ListItemText primary="Dashboard" />
             </ListItem>
             <ListItem 
-            button 
-            onClick={() => handleNavigation('/accounts')}
-            sx={{ justifyContent: 'center' }}
+                button 
+                onClick={() => handleNavigation('/accounts')}
+                sx={{ justifyContent: 'center' }}
             >
-            <AccountBalanceIcon sx={{ marginLeft: 3, marginRight: 5 }} />
-            <ListItemText primary="Accounts" />
+                <AccountBalanceIcon sx={{ marginLeft: 3, marginRight: 5 }} />
+                <ListItemText primary="Accounts" />
             </ListItem>
-            <ListItem 
-            button 
-            onClick={() => handleNavigation('/transactions')}
-            sx={{ justifyContent: 'center' }}
-            >
-            <ReceiptIcon sx={{ marginLeft: 3, marginRight: 5 }} />
-            <ListItemText primary="Transactions" />
+                <ListItem 
+                button 
+                onClick={() => handleNavigation('/transactions')}
+                sx={{ justifyContent: 'center' }}
+                >
+                <ReceiptIcon sx={{ marginLeft: 3, marginRight: 5 }} />
+                <ListItemText primary="Transactions" />
             </ListItem>
         </List>
       )}
@@ -104,12 +104,18 @@ const DashboardLayout: React.FC<{ darkMode: boolean; toggleDarkMode: () => void 
             variant={isMobile ? 'temporary' : 'permanent'}
             open={isMobile ? mobileOpen : true}
             onClose={handleDrawerToggle}
+            anchor={isMobile ? 'top' : 'left'}
             ModalProps={{
               keepMounted: true,
             }}
             sx={{
               display: { xs: 'block', sm: 'none' },
-              '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+              '& .MuiDrawer-paper': { 
+                boxSizing: 'border-box', 
+                width: drawerWidth,
+                maxHeight: isMobile ? '50vh' : 'none', 
+                overflow: isMobile ? 'auto' : 'none' 
+            },
             }}
           >
             {drawer}

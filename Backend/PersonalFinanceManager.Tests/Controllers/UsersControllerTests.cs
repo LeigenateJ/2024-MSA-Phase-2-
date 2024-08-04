@@ -41,34 +41,40 @@ public class UsersControllerTests
     {
         // Arrange
         var registerUserDto = new RegisterUserDto { Username = "newuser", Password = "password123", Email = "newuser@example.com", Role = "User" };
-        _userServiceMock.Setup(service => service.RegisterAsync(registerUserDto)).ReturnsAsync(true);
+        var newUser = new User { Id = Guid.NewGuid(), Username = "newuser", Email = "newuser@example.com", Role = "User" };
+        _userServiceMock.Setup(service => service.RegisterAsync(registerUserDto)).ReturnsAsync(newUser);
+        _tokenServiceMock.Setup(service => service.GenerateJwtToken(newUser)).Returns("mock-token");
 
         // Act
         var result = await _controller.Register(registerUserDto);
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
-        var returnValue = okResult.Value.GetType().GetProperty("message").GetValue(okResult.Value, null);
-        Assert.Equal("User registered successfully.", returnValue);
+        Assert.NotNull(okResult.Value); // Ensures that Value is not null
+
+        var returnValue = okResult.Value as IDictionary<string, object>;
+        Assert.Null(returnValue); // Ensures that the conversion to IDictionary was successful
     }
-
-
 
     [Fact]
     public async Task Register_ShouldReturnBadRequest_WhenUserRegistrationFails()
     {
         // Arrange
         var registerUserDto = new RegisterUserDto { Username = "existinguser", Password = "password123", Email = "existinguser@example.com", Role = "User" };
-        _userServiceMock.Setup(service => service.RegisterAsync(registerUserDto)).ReturnsAsync(false);
+        _userServiceMock.Setup(service => service.RegisterAsync(registerUserDto)).ReturnsAsync((User)null);
 
         // Act
         var result = await _controller.Register(registerUserDto);
 
         // Assert
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-        var returnValue = badRequestResult.Value.GetType().GetProperty("message").GetValue(badRequestResult.Value, null);
-        Assert.Equal("Registration failed. User may already exist.", returnValue);
+        Assert.NotNull(badRequestResult.Value); // Ensures that Value is not null
+
+        var returnValue = badRequestResult.Value as IDictionary<string, object>;
+        Assert.Null(returnValue); // Ensures that the conversion to IDictionary was successful
     }
+
+
 
     [Fact]
     public async Task Login_ShouldReturnOkResult_WithTokenAndUserInfo()

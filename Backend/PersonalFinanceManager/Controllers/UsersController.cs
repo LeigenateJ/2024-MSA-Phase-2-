@@ -31,13 +31,23 @@ namespace PersonalFinanceManager.Controllers
 
             try
             {
-                var result = await _userService.RegisterAsync(registerUserDto);
-                if (!result)
+                var user = await _userService.RegisterAsync(registerUserDto);
+                if (user == null)
                 {
                     return BadRequest(new { message = "Registration failed. User may already exist." });
                 }
 
-                return Ok(new { message = "User registered successfully." });
+                var token = _tokenService.GenerateJwtToken(user);
+
+                var userInfo = new
+                {
+                    id = user.Id,
+                    username = user.Username,
+                    email = user.Email,
+                    role = user.Role
+                };
+
+                return Ok(new { token, user = userInfo });
             }
             catch (Exception ex)
             {

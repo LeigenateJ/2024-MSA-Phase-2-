@@ -18,21 +18,21 @@ namespace PersonalFinanceManager.Services
             _mapper = mapper;
         }
 
-        public async Task<bool> RegisterAsync(RegisterUserDto userDto)
+        public async Task<User> RegisterAsync(RegisterUserDto userDto)
         {
             var user = await _userRepository.GetAllAsync()
                                             .Result
                                             .SingleOrDefaultAsync(u => u.Username == userDto.Username);
             if (user != null)
             {
-                return false;
+                return null;
             }
 
             var newUser = _mapper.Map<User>(userDto);
             newUser.PasswordHash = BCrypt.Net.BCrypt.HashPassword(userDto.Password);
 
             await _userRepository.AddAsync(newUser);
-            return true;
+            return newUser;
         }
 
         public async Task<User> AuthenticateAsync(string username, string password)

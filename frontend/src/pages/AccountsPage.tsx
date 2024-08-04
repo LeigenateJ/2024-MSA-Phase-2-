@@ -86,13 +86,13 @@ const AccountsPage: React.FC = () => {
 
   return (
     <Box>
-      <Typography variant="h4" gutterBottom>
-        Accounts
-      </Typography>
-      <Box display="flex" justifyContent="flex-end" mb={2}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+        <Typography variant="h4" gutterBottom>
+          Accounts
+        </Typography>
         <FormControlLabel
           control={<Switch checked={editMode} onChange={toggleEditMode} />}
-          label="Edit Mode"
+          label="Edit"
         />
       </Box>
       <Grid container spacing={3}>
