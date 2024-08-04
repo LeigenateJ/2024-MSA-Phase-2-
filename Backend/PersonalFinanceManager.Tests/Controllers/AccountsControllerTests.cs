@@ -114,7 +114,6 @@ public class AccountsControllerTests
         var userId = Guid.NewGuid();
         _accountServiceMock.Setup(service => service.GetAccountByIdAsync(accountId)).ReturnsAsync((AccountDto)null);
 
-        // 模拟认证用户
         var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
         {
         new Claim(ClaimTypes.NameIdentifier, userId.ToString())
