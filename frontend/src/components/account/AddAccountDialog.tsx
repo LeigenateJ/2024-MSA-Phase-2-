@@ -231,11 +231,15 @@ const AddAccountDialog: React.FC<AddAccountDialogProps> = ({ open, onClose }) =>
       setType(currentAccount.type);
       setBalance(currentAccount.balance);
     } else {
-      setName('');
-      setType('');
-      setBalance(null);
+        resetForm();
     }
   }, [currentAccount]);
+
+  const resetForm = () => {
+    setName('');
+    setType('');
+    setBalance(null);
+  };
 
   const handleAddOrUpdate = () => {
     if (name && type && balance !== null) {
@@ -262,6 +266,11 @@ const AddAccountDialog: React.FC<AddAccountDialogProps> = ({ open, onClose }) =>
   
       onClose();
     }
+  };
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
   };
 
   return (
@@ -301,7 +310,7 @@ const AddAccountDialog: React.FC<AddAccountDialogProps> = ({ open, onClose }) =>
         />
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} color="primary">
+        <Button onClick={handleClose} color="primary">
           Cancel
         </Button>
         <Button onClick={handleAddOrUpdate} color="primary" disabled={!name || !type || balance === null}>

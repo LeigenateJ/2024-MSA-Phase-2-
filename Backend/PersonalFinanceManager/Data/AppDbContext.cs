@@ -16,12 +16,14 @@ namespace PersonalFinanceManager.Data
             modelBuilder.Entity<Account>()
                 .HasOne(a => a.User)
                 .WithMany(u => u.Accounts)
-                .HasForeignKey(a => a.UserId);
+                .HasForeignKey(a => a.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<Transaction>()
                 .HasOne(t => t.Account)
                 .WithMany(a => a.Transactions)
-                .HasForeignKey(t => t.AccountId);
+                .HasForeignKey(t => t.AccountId)
+                .OnDelete(DeleteBehavior.Cascade); ;
         }
 
     }

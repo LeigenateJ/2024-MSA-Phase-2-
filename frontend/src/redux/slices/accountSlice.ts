@@ -1,6 +1,8 @@
 // src/redux/slices/accountsSlice.ts
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import axiosInstance from '../../api/axiosInstance';
+import { fetchTransactions } from './transactionSlice';
+import { RootState } from '../store';
 
 interface Account {
   id: string;
@@ -28,7 +30,6 @@ const initialState: AccountsState = {
 export const fetchAccounts = createAsyncThunk('accounts/fetchAccounts', async (_, { rejectWithValue }) => {
   try {
     const response = await axiosInstance.get<Account[]>('/accounts');
-    console.log('accounts: ', response.data)
     return response.data;
   } catch (error: any) {
     return rejectWithValue(error.response?.data?.message || 'Failed to fetch accounts');
@@ -38,9 +39,7 @@ export const fetchAccounts = createAsyncThunk('accounts/fetchAccounts', async (_
 // Add a new account
 export const addAccount = createAsyncThunk('accounts/addAccount', async (newAccount: Omit<Account, 'id'>, { rejectWithValue }) => {
   try {
-    console.log('req: ', newAccount)
     const response = await axiosInstance.post<Account>('/accounts', newAccount);
-    console.log('new account: ', response.data)
     return response.data;
   } catch (error: any) {
     return rejectWithValue(error.response?.data?.message || 'Failed to add account');
@@ -58,14 +57,23 @@ export const updateAccount = createAsyncThunk('accounts/updateAccount', async (a
 });
 
 // Delete account
-export const deleteAccount = createAsyncThunk('accounts/deleteAccount', async (accountId: string, { rejectWithValue }) => {
-  try {
-    await axiosInstance.delete(`/accounts/${accountId}`);
-    return accountId;
-  } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || 'Failed to delete account');
-  }
-});
+export const deleteAccount = createAsyncThunk(
+    'accounts/deleteAccount',
+    async (accountId: string, { rejectWithValue, dispatch, getState }) => {
+      try {
+        await axiosInstance.delete(`/accounts/${accountId}`);
+        const state = getState() as RootState; 
+        const userId = state.auth.user?.id;
+        if (userId) {
+          dispatch(fetchTransactions(userId)); 
+        }
+        return accountId;
+      } catch (error: any) {
+        return rejectWithValue(error.response?.data?.message || 'Failed to delete account');
+      }
+    }
+  );
+
 
 const accountsSlice = createSlice({
   name: 'accounts',

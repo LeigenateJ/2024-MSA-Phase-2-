@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect  } from 'react';
 import { AppBar, Toolbar, Typography, IconButton, Drawer, Box, List, ListItem, ListItemText, useMediaQuery, useTheme, Divider } from '@mui/material';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -8,17 +8,28 @@ import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import ThemeToggle from '../components/common/ThemeToggle';
-import { RootState } from '../redux/store';
+import { AppDispatch, RootState } from '../redux/store';
+import { fetchAccounts } from '../redux/slices/accountSlice';
+import { fetchTransactions } from '../redux/slices/transactionSlice';
 
 const drawerWidth = 240;
 
 const DashboardLayout: React.FC<{ darkMode: boolean; toggleDarkMode: () => void }> = ({ darkMode, toggleDarkMode }) => {
-  const dispatch = useDispatch();
+  const dispatch: AppDispatch = useDispatch();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const { isAuthenticated, user  } = useSelector((state: RootState) => state.auth);
   const navigate = useNavigate();
+  const userId = user?.id;
+
+
+  useEffect(() => {
+    if (isAuthenticated && userId) {
+      dispatch(fetchAccounts());
+      dispatch(fetchTransactions(userId));
+    }
+  }, [dispatch, isAuthenticated, userId]);
 
 
   const handleDrawerToggle = () => {

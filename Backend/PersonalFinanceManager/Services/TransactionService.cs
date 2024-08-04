@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using AutoMapper;
 using PersonalFinanceManager.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace PersonalFinanceManager.Services
 {
@@ -34,6 +35,24 @@ namespace PersonalFinanceManager.Services
             var transaction = await _transactionRepository.GetByIdAsync(transactionId);
             return _mapper.Map<TransactionDto>(transaction);
         }
+
+        public async Task<IEnumerable<TransactionDto>> GetTransactionsByUserIdAsync(Guid userId)
+        {
+            var accounts = await _accountRepository.GetAllAsync()
+                                                   .Result
+                                                   .Where(a => a.UserId == userId)
+                                                   .ToListAsync();
+
+            var accountIds = accounts.Select(a => a.Id).ToList();
+
+            var transactions = await _transactionRepository.GetAllAsync()
+                                                           .Result
+                                                           .Where(t => accountIds.Contains(t.AccountId))
+                                                           .ToListAsync();
+
+            return _mapper.Map<IEnumerable<TransactionDto>>(transactions);
+        }
+
 
         public async Task<TransactionDto> AddTransactionAsync(TransactionDto transactionDto)
         {

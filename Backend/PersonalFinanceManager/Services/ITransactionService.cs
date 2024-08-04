@@ -12,5 +12,7 @@ namespace PersonalFinanceManager.Services
         Task<TransactionDto> AddTransactionAsync(TransactionDto transactionDto);
         Task<bool> UpdateTransactionAsync(Guid id, TransactionDto transactionDto);
         Task<bool> DeleteTransactionAsync(Guid id);
+        Task<IEnumerable<TransactionDto>> GetTransactionsByUserIdAsync(Guid userId);
+
     }
 }

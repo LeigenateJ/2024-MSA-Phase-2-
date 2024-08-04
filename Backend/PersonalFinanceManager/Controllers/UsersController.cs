@@ -9,15 +9,17 @@ namespace PersonalFinanceManager.Controllers
     [Authorize]
     [ApiController]
     [Route("api/[controller]")]
-    public class UsersController : ControllerBase
+    public class UsersController : BaseController
     {
         private readonly IUserService _userService;
         private readonly ITokenService _tokenService;
+        private readonly ITransactionService _transactionService;
 
-        public UsersController(IUserService userService, ITokenService tokenService)
+        public UsersController(IUserService userService, ITokenService tokenService, ITransactionService transactionService)
         {
             _userService = userService;
             _tokenService = tokenService;
+            _transactionService = transactionService;
         }
 
         [AllowAnonymous]
@@ -55,6 +57,30 @@ namespace PersonalFinanceManager.Controllers
                 return StatusCode(500, "An error occurred while processing your request.");
             }
         }
+
+        [HttpGet("{userId}/transactions")]
+        public async Task<ActionResult<IEnumerable<TransactionDto>>> GetTransactionsByUserId(Guid userId)
+        {
+            try
+            {
+                var authenticatedUserId = GetUserIdFromToken();
+
+                // Ensure the user is accessing their own data
+                if (authenticatedUserId != userId)
+                {
+                    return Unauthorized(new { message = "Access denied." });
+                }
+
+                var transactions = await _transactionService.GetTransactionsByUserIdAsync(userId);
+                return Ok(transactions);
+            }
+            catch (Exception ex)
+            {
+                // _logger.LogError(ex, "An error occurred while fetching transactions.");
+                return StatusCode(500, "Internal server error.");
+            }
+        }
+
 
         [AllowAnonymous]
         [HttpPost("login")]

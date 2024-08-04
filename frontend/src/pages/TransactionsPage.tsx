@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { Grid, Paper, Typography, Button, Box, useMediaQuery, IconButton, Switch, FormControlLabel} from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { useSelector, useDispatch } from 'react-redux';
-import { RootState } from '../redux/store';
+import { AppDispatch, RootState } from '../redux/store';
 import Pagination from '@mui/material/Pagination';
 import AddTransactionDialog from '../components/transaction/AddTransactionDialog';
 import { calculateBalanceAtTransactionTime } from '../utils/calculateBalanceAtTransactionTime';
-import { setCurrentTransaction, deleteTransaction  } from '../redux/slices/transactionSlice';
+import {  setCurrentTransaction, deleteTransaction  } from '../redux/slices/transactionSlice';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
@@ -17,7 +17,7 @@ const TransactionsPage: React.FC = () => {
   const rowsPerPage = isSmallScreen ? 5 : 9;
   const transactions = useSelector((state: RootState) => state.transactions.transactions);
   const accounts = useSelector((state: RootState) => state.accounts.accounts);
-  const dispatch = useDispatch();
+  const dispatch: AppDispatch = useDispatch();
 
   const [editMode, setEditMode] = useState(false);
 
@@ -114,7 +114,7 @@ const TransactionsPage: React.FC = () => {
         />
       </Box>
       <Box mt={2} display="flex" justifyContent="center">
-        <Button variant="contained" color="primary" onClick={handleOpenDialog}>
+        <Button variant="contained" color="primary" onClick={() => handleOpenDialog(null)}>
           Add New Transaction
         </Button>
       </Box>

@@ -12,8 +12,8 @@ import {
   FormControl,
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '../../redux/store';
-import { addTransaction, updateTransaction, setCurrentTransaction } from '../../redux/slices/transactionSlice';
+import { AppDispatch, RootState } from '../../redux/store';
+import { createTransaction, updateTransaction, setCurrentTransaction } from '../../redux/slices/transactionSlice';
 
 interface AddTransactionDialogProps {
   open: boolean;
@@ -21,7 +21,7 @@ interface AddTransactionDialogProps {
 }
 
 const AddTransactionDialog: React.FC<AddTransactionDialogProps> = ({ open, onClose }) => {
-  const dispatch = useDispatch();
+  const dispatch: AppDispatch = useDispatch();
   const accounts = useSelector((state: RootState) => state.accounts.accounts);
   const currentTransaction = useSelector((state: RootState) => state.transactions.currentTransaction);
 
@@ -38,21 +38,25 @@ const AddTransactionDialog: React.FC<AddTransactionDialogProps> = ({ open, onClo
       setAmount(currentTransaction.amount);
       setType(currentTransaction.type);
       setCategory(currentTransaction.category);
-      setDate(currentTransaction.date.split('T')[0]); // 仅设置日期部分
+      setDate(currentTransaction.date ? currentTransaction.date.split('T')[0] : '');
       setDescription(currentTransaction.description);
     } else {
-      // 如果没有初始数据，则清空表单
-      setAccountId('');
-      setAmount(null);
-      setType('');
-      setCategory('');
-      setDate(null);
-      setDescription('');
+        resetForm();
     }
   }, [currentTransaction]);
 
+  const resetForm = () => {
+    setAccountId('');
+    setAmount(null);
+    setType('');
+    setCategory('');
+    setDate(null);
+    setDescription('');
+  };
+
   const handleSave = () => {
-    if (accountId && amount !== null && type && category && date && description) {
+    console.log('Attempting to save transaction');
+    if (accountId && amount !== null && type && category && date) {
       const now = new Date();
       const hours = String(now.getHours()).padStart(2, '0');
       const minutes = String(now.getMinutes()).padStart(2, '0');
@@ -60,8 +64,12 @@ const AddTransactionDialog: React.FC<AddTransactionDialogProps> = ({ open, onClo
       const milliseconds = String(now.getMilliseconds()).padStart(3, '0');
       const fullDateTime = `${date}T${hours}:${minutes}:${seconds}.${milliseconds}Z`;
 
+      const finalDescription = description.trim() === '' ? 'N/A' : description;
+
+      console.log('Final description:', finalDescription);
+
       if (currentTransaction?.id) {
-        // 编辑交易
+        // edit transaction
         dispatch(updateTransaction({
           id: currentTransaction.id,
           accountId,
@@ -69,23 +77,27 @@ const AddTransactionDialog: React.FC<AddTransactionDialogProps> = ({ open, onClo
           type,
           category,
           date: fullDateTime,
-          description,
+          description: finalDescription,
         }));
       } else {
-        // 新增交易
-        dispatch(addTransaction({
-          id: Math.random().toString(36).substr(2, 9),
+        // add transaction
+        dispatch(createTransaction({
           accountId,
           amount,
           type,
           category,
           date: fullDateTime,
-          description,
+          description: finalDescription,
         }));
       }
       onClose();
-      dispatch(setCurrentTransaction(null)); // 关闭对话框后重置当前交易
+      dispatch(setCurrentTransaction(null)); 
     }
+  };
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
   };
 
   return (
@@ -161,14 +173,13 @@ const AddTransactionDialog: React.FC<AddTransactionDialogProps> = ({ open, onClo
           fullWidth
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          required
         />
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} color="primary">
+        <Button onClick={handleClose} color="primary">
           Cancel
         </Button>
-        <Button onClick={handleSave} color="primary" disabled={!accountId || amount === null || !type || !category || !date || !description}>
+        <Button onClick={handleSave} color="primary" disabled={!accountId || amount === null || !type || !category || !date }>
           {currentTransaction ? 'Update' : 'Add'}
         </Button>
       </DialogActions>

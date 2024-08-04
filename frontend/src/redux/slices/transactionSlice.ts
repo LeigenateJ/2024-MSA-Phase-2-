@@ -1,5 +1,6 @@
-// src/redux/slices/transactionsSlice.ts
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import axiosInstance from '../../api/axiosInstance';
+import { fetchAccounts } from './accountSlice';
 
 interface Transaction {
   id: string;
@@ -14,46 +15,109 @@ interface Transaction {
 interface TransactionsState {
   transactions: Transaction[];
   currentTransaction: Transaction | null;
+  loading: boolean;
+  error: string | null;
 }
 
 const initialState: TransactionsState = {
-  transactions: [
-    { id: '1', accountId: '1', amount: -50, type: 'Expense', category: 'Grocery', date: '2024-07-01T12:18:46.058', description: 'Grocery shopping' },
-    { id: '2', accountId: '1', amount: -100, type: 'Expense', category: 'Restaurant', date: '2024-07-02T12:18:46.058', description: 'Dinner at restaurant' },
-    { id: '3', accountId: '2', amount: 500, type: 'Income', category: 'Salary', date: '2024-07-03T12:18:46.058', description: 'Monthly salary' },
-    { id: '4', accountId: '1', amount: -30, type: 'Expense', category: 'Transport', date: '2024-07-04T12:18:46.058', description: 'Bus fare' },
-    { id: '5', accountId: '2', amount: 200, type: 'Income', category: 'Investment', date: '2024-07-05T12:18:46.058', description: 'Investment return' },
-    { id: '6', accountId: '1', amount: -75, type: 'Expense', category: 'Utilities', date: '2024-07-06T12:18:46.058', description: 'Electricity bill' },
-    { id: '7', accountId: '3', amount: -150, type: 'Expense', category: 'Shopping', date: '2024-07-07T12:18:46.058', description: 'Online shopping' },
-    { id: '8', accountId: '2', amount: 1000, type: 'Income', category: 'Bonus', date: '2024-07-08', description: 'Yearly bonus' },
-    { id: '9', accountId: '1', amount: -25, type: 'Expense', category: 'Entertainment', date: '2024-07-09T12:18:46.058', description: 'Movie ticket' },
-    { id: '10', accountId: '3', amount: -200, type: 'Expense', category: 'Travel', date: '2024-07-10T12:18:46.058', description: 'Flight booking' },
-  ],
+  transactions: [],
   currentTransaction: null,
+  loading: false,
+  error: null,
 };
+
+// Fetch transactions for a specific user
+export const fetchTransactions = createAsyncThunk(
+    'transactions/fetchTransactions',
+    async (userId: string, { rejectWithValue }) => {
+      try {
+        const response = await axiosInstance.get<Transaction[]>(`/Users/${userId}/transactions`);
+        return response.data;
+      } catch (error: any) {
+        return rejectWithValue(error.response?.data?.message || 'Failed to fetch transactions');
+      }
+    }
+  );
+
+// Create a new transaction
+export const createTransaction = createAsyncThunk(
+    'transactions/createTransaction',
+    async (newTransaction: Omit<Transaction, 'id'>, { rejectWithValue, dispatch }) => {
+      try {
+        const response = await axiosInstance.post<Transaction>('/transactions', newTransaction);
+        dispatch(fetchAccounts()); // Refresh accounts after creating a transaction
+        return response.data;
+      } catch (error: any) {
+        return rejectWithValue(error.response?.data?.message || 'Failed to create transaction');
+      }
+    }
+  );
+  
+  // Update a transaction
+  export const updateTransaction = createAsyncThunk(
+    'transactions/updateTransaction',
+    async (updatedTransaction: Transaction, { rejectWithValue, dispatch }) => {
+      try {
+        await axiosInstance.put(`/transactions/${updatedTransaction.id}`, updatedTransaction);
+        dispatch(fetchAccounts()); // Refresh accounts after updating a transaction
+        return updatedTransaction;
+      } catch (error: any) {
+        return rejectWithValue(error.response?.data?.message || 'Failed to update transaction');
+      }
+    }
+  );
+  
+  // Delete a transaction
+  export const deleteTransaction = createAsyncThunk(
+    'transactions/deleteTransaction',
+    async (transactionId: string, { rejectWithValue, dispatch }) => {
+      try {
+        await axiosInstance.delete(`/transactions/${transactionId}`);
+        dispatch(fetchAccounts()); // Refresh accounts after deleting a transaction
+        return transactionId;
+      } catch (error: any) {
+        return rejectWithValue(error.response?.data?.message || 'Failed to delete transaction');
+      }
+    }
+  );
 
 const transactionsSlice = createSlice({
   name: 'transactions',
   initialState,
   reducers: {
-    addTransaction(state, action: PayloadAction<Transaction>) {
-      state.transactions.push(action.payload);
-    },
-    updateTransaction(state, action: PayloadAction<Transaction>) {
-      const index = state.transactions.findIndex(transaction => transaction.id === action.payload.id);
-      if (index !== -1) {
-        state.transactions[index] = action.payload;
-      }
-    },
-    deleteTransaction(state, action: PayloadAction<string>) {
-      state.transactions = state.transactions.filter(transaction => transaction.id !== action.payload);
-    },
     setCurrentTransaction(state, action: PayloadAction<Transaction | null>) {
-        state.currentTransaction = action.payload;
-      },
+      state.currentTransaction = action.payload;
+    },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchTransactions.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchTransactions.fulfilled, (state, action: PayloadAction<Transaction[]>) => {
+        state.loading = false;
+        state.transactions = action.payload;
+      })
+      .addCase(fetchTransactions.rejected, (state, action: PayloadAction<any>) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(createTransaction.fulfilled, (state, action: PayloadAction<Transaction>) => {
+        state.transactions.push(action.payload);
+      })
+      .addCase(updateTransaction.fulfilled, (state, action: PayloadAction<Transaction>) => {
+        const index = state.transactions.findIndex(transaction => transaction.id === action.payload.id);
+        if (index !== -1) {
+          state.transactions[index] = action.payload;
+        }
+      })
+      .addCase(deleteTransaction.fulfilled, (state, action: PayloadAction<string>) => {
+        state.transactions = state.transactions.filter(transaction => transaction.id !== action.payload);
+      });
   },
 });
 
-export const { addTransaction, updateTransaction, deleteTransaction, setCurrentTransaction } = transactionsSlice.actions;
+export const { setCurrentTransaction } = transactionsSlice.actions;
 
 export default transactionsSlice.reducer;
