@@ -30,6 +30,7 @@ export const login = createAsyncThunk(
     async ({ username, password }: { username: string; password: string }, { rejectWithValue }) => {
       try {
         const response = await axios.post('https://localhost:7045/api/users/login', { username, password });
+        console.log('user: ', response.data)
         return response.data;
       } catch (error: any) {
         if (error.response && error.response.data) {

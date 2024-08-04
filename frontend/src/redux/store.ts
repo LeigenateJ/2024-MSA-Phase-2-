@@ -5,6 +5,7 @@ import themeReducer from './slices/themeSlice';
 import transactionReducer from './slices/transactionSlice';
 import accountReducer from './slices/accountSlice';
 import { useDispatch, useSelector, TypedUseSelectorHook } from 'react-redux';
+import { tokenMiddleware } from './middleware/tokenMiddleware';
 
 const store = configureStore({
   reducer: {
@@ -13,6 +14,7 @@ const store = configureStore({
     transactions: transactionReducer,
     accounts: accountReducer
   },
+  middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(tokenMiddleware),
 });
 
 export type RootState = ReturnType<typeof store.getState>;
