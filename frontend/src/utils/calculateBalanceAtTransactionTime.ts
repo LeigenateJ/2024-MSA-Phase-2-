@@ -1,4 +1,3 @@
-// utils/calculateBalanceAtTransactionTime.ts
 export const calculateBalanceAtTransactionTime = (accountId: string, transactionId: string, transactions: any[], accounts: any[]) => {
 
     const account = accounts.find(acc => acc.id === accountId);

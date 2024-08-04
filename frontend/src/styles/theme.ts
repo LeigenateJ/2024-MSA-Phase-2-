@@ -22,7 +22,7 @@ export const lightTheme = createTheme({
     MuiButton: {
       styleOverrides: {
         root: {
-          textTransform: 'none', // Example customization
+          textTransform: 'none', 
         },
       },
     },
@@ -51,7 +51,7 @@ export const darkTheme = createTheme({
     MuiButton: {
       styleOverrides: {
         root: {
-          textTransform: 'none', // Example customization
+          textTransform: 'none', 
         },
       },
     },
