@@ -263,7 +263,7 @@ const AddAccountDialog: React.FC<AddAccountDialogProps> = ({ open, onClose }) =>
         };
         dispatch(addAccount(newAccount));
       }
-  
+      resetForm();
       onClose();
     }
   };
