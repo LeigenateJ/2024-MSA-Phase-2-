@@ -7,22 +7,33 @@ import {
   Button,
   TextField,
   MenuItem,
+  InputLabel,
+  Select,
+  FormControl,
 } from '@mui/material';
+import { useDispatch } from 'react-redux';
+import { addAccount } from '../../redux/slices/accountSlice'
 
 interface AddAccountDialogProps {
   open: boolean;
   onClose: () => void;
-  onAdd: (account: { name: string; type: string; balance: number }) => void;
 }
 
-const AddAccountDialog: React.FC<AddAccountDialogProps> = ({ open, onClose, onAdd }) => {
+const AddAccountDialog: React.FC<AddAccountDialogProps> = ({ open, onClose }) => {
+  const dispatch = useDispatch();
   const [name, setName] = useState('');
   const [type, setType] = useState('');
   const [balance, setBalance] = useState<number | null>(null);
 
   const handleAdd = () => {
     if (name && type && balance !== null) {
-      onAdd({ name, type, balance });
+      dispatch(addAccount({
+        id: Math.random().toString(36).substr(2, 9), 
+        name,
+        type,
+        balance,
+        userId: 'user1', 
+      }));
       onClose();
     }
   };
@@ -32,7 +43,6 @@ const AddAccountDialog: React.FC<AddAccountDialogProps> = ({ open, onClose, onAd
       <DialogTitle id="form-dialog-title">Add New Account</DialogTitle>
       <DialogContent>
         <TextField
-          autoFocus
           margin="dense"
           label="Account Name"
           fullWidth
@@ -40,19 +50,18 @@ const AddAccountDialog: React.FC<AddAccountDialogProps> = ({ open, onClose, onAd
           onChange={(e) => setName(e.target.value)}
           required
         />
-        <TextField
-          select
-          margin="dense"
-          label="Account Type"
-          fullWidth
-          value={type}
-          onChange={(e) => setType(e.target.value)}
-          required
-        >
-          <MenuItem value="Checking">Checking</MenuItem>
-          <MenuItem value="Savings">Savings</MenuItem>
-          <MenuItem value="Credit">Credit</MenuItem>
-        </TextField>
+        <FormControl fullWidth margin="dense">
+          <InputLabel>Account Type</InputLabel>
+          <Select
+            value={type}
+            onChange={(e) => setType(e.target.value as string)}
+            required
+          >
+            <MenuItem value="Checking">Checking</MenuItem>
+            <MenuItem value="Savings">Savings</MenuItem>
+            <MenuItem value="Credit">Credit</MenuItem>
+          </Select>
+        </FormControl>
         <TextField
           margin="dense"
           label="Initial Balance"
