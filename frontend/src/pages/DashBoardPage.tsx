@@ -1,16 +1,20 @@
-// DashboardPage.tsx
 import React from 'react';
 import { Grid, Paper, Typography, Box } from '@mui/material';
-import { mockAccounts, mockTransactions } from '../mockData';
+import { useSelector } from 'react-redux';
+import { RootState } from '../redux/store';
 
 const DashboardPage: React.FC = () => {
-  const totalBalance = mockAccounts.reduce((acc, account) => acc + account.balance, 0);
-  const totalIncome = mockTransactions
+  const accounts = useSelector((state: RootState) => state.accounts.accounts);
+  const transactions = useSelector((state: RootState) => state.transactions.transactions);
+
+  const totalBalance = accounts.reduce((acc, account) => acc + account.balance, 0);
+  const totalIncome = transactions
     .filter(transaction => transaction.type === 'Income')
     .reduce((acc, transaction) => acc + transaction.amount, 0);
-  const totalExpense = mockTransactions
+  const totalExpense = transactions
     .filter(transaction => transaction.type === 'Expense')
     .reduce((acc, transaction) => acc + transaction.amount, 0);
+  const recentTransactions = [...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   return (
     <Box>
@@ -20,7 +24,7 @@ const DashboardPage: React.FC = () => {
       <Grid container spacing={3}>
         <Grid item xs={12} md={4}>
           <Paper elevation={3} sx={{ p: 2 }}>
-            <Typography variant="h6">Total Balance</Typography>
+            <Typography variant="h6">Current Total Balance</Typography>
             <Typography variant="h4">${totalBalance}</Typography>
           </Paper>
         </Grid>
@@ -39,9 +43,9 @@ const DashboardPage: React.FC = () => {
         <Grid item xs={12}>
           <Paper elevation={3} sx={{ p: 2 }}>
             <Typography variant="h6">Recent Transactions</Typography>
-            {mockTransactions.slice(0, 5).map((transaction) => (
+            {recentTransactions.slice(0, 5).map((transaction) => (
               <Box key={transaction.id}>
-                <Typography>{transaction.category} - ${transaction.amount}</Typography>
+                <Typography>{transaction.category} {transaction.type === 'Income' ? '+' : '-'} ${Math.abs(transaction.amount)}</Typography>
               </Box>
             ))}
           </Paper>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Grid, Paper, Typography, Button, Box, useMediaQuery, IconButton } from '@mui/material';
+import { Grid, Paper, Typography, Button, Box, useMediaQuery, IconButton, Switch, FormControlLabel} from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../redux/store';
@@ -18,6 +18,8 @@ const TransactionsPage: React.FC = () => {
   const transactions = useSelector((state: RootState) => state.transactions.transactions);
   const accounts = useSelector((state: RootState) => state.accounts.accounts);
   const dispatch = useDispatch();
+
+  const [editMode, setEditMode] = useState(false);
 
   const completeTransactions = transactions.map(transaction => {
     const account = accounts.find(acc => acc.id === transaction.accountId);
@@ -56,11 +58,21 @@ const TransactionsPage: React.FC = () => {
     dispatch(deleteTransaction(transactionId));
   };
 
+  const toggleEditMode = () => {
+    setEditMode(!editMode);
+  };
+
   return (
     <Box>
       <Typography variant="h4" gutterBottom>
         Transactions
       </Typography>
+      <Box display="flex" justifyContent="flex-end" mb={2}>
+        <FormControlLabel
+          control={<Switch checked={editMode} onChange={toggleEditMode} />}
+          label="Edit Mode"
+        />
+      </Box>
       <Grid container spacing={isSmallScreen ? 2 : 3}>
         {displayedTransactions.map((transaction) => (
           <Grid item xs={12} md={4} key={transaction.id}>
@@ -79,14 +91,16 @@ const TransactionsPage: React.FC = () => {
               <Typography variant="body2" color="textSecondary">
                 Description: {transaction.description}
               </Typography>
-              <Box display="flex" justifyContent="flex-end">
-                <IconButton aria-label="edit" color="primary" onClick={() => handleOpenDialog(transaction)}>
-                  <EditIcon />
-                </IconButton>
-                <IconButton aria-label="delete" color="error" onClick={() => handleDeleteTransaction(transaction.id)}>
-                  <DeleteOutlineIcon />
-                </IconButton>
-              </Box>
+              {editMode && (
+                <Box display="flex" justifyContent="flex-end">
+                  <IconButton aria-label="edit" color="primary" onClick={() => handleOpenDialog(transaction)}>
+                    <EditIcon />
+                  </IconButton>
+                  <IconButton aria-label="delete" color="error" onClick={() => handleDeleteTransaction(transaction.id)}>
+                    <DeleteOutlineIcon />
+                  </IconButton>
+                </Box>
+              )}
             </Paper>
           </Grid>
         ))}

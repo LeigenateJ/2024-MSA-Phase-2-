@@ -43,18 +43,30 @@ const DashboardLayout: React.FC<{ darkMode: boolean; toggleDarkMode: () => void 
       <Divider />
       {isAuthenticated && (
         <List>
-          <ListItem button onClick={() => handleNavigation('/dashboard')}>
-            <DashboardIcon sx={{ marginRight: 1 }} />
+            <ListItem 
+            button 
+            onClick={() => handleNavigation('/dashboard')}
+            sx={{ justifyContent: 'center' }}
+            >
+            <DashboardIcon sx={{ marginLeft: 3, marginRight: 5 }} />
             <ListItemText primary="Dashboard" />
-          </ListItem>
-          <ListItem button onClick={() => handleNavigation('/accounts')}>
-            <AccountBalanceIcon sx={{ marginRight: 1 }} />
+            </ListItem>
+            <ListItem 
+            button 
+            onClick={() => handleNavigation('/accounts')}
+            sx={{ justifyContent: 'center' }}
+            >
+            <AccountBalanceIcon sx={{ marginLeft: 3, marginRight: 5 }} />
             <ListItemText primary="Accounts" />
-          </ListItem>
-          <ListItem button onClick={() => handleNavigation('/transactions')}>
-            <ReceiptIcon sx={{ marginRight: 1 }} />
+            </ListItem>
+            <ListItem 
+            button 
+            onClick={() => handleNavigation('/transactions')}
+            sx={{ justifyContent: 'center' }}
+            >
+            <ReceiptIcon sx={{ marginLeft: 3, marginRight: 5 }} />
             <ListItemText primary="Transactions" />
-          </ListItem>
+            </ListItem>
         </List>
       )}
     </div>

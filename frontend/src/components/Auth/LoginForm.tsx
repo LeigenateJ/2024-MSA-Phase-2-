@@ -1,28 +1,20 @@
 import React, { useState } from 'react';
 import { TextField, Button, Box, Typography, CircularProgress } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '../../redux/store';
+import { AppDispatch, RootState } from '../../redux/store';
 import { useNavigate } from 'react-router-dom';
-import { startLoading, setToken, setError } from '../../redux/slices/authSlice';
+import { login } from '../../redux/slices/authSlice';
 
 const LoginForm: React.FC = () => {
-  const dispatch = useDispatch();
+  const dispatch: AppDispatch = useDispatch();
   const navigate = useNavigate();
-  const { loading, error, isAuthenticated  } = useSelector((state: RootState) => state.auth);
+  const { loading, error, isAuthenticated } = useSelector((state: RootState) => state.auth);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    dispatch(startLoading());
-    
-    try {
-      // Replace with actual login API call
-      const token = await fakeLoginApiCall(username, password);
-      dispatch(setToken(token));
-    } catch (err) {
-      dispatch(setError('Login failed'));
-    }
+    dispatch(login({ username, password }));
   };
 
   React.useEffect(() => {
@@ -87,16 +79,3 @@ const LoginForm: React.FC = () => {
 };
 
 export default LoginForm;
-
-// Mock login API call
-const fakeLoginApiCall = (username: string, password: string): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        if (username === 'test' && password === 'password') {
-          resolve('fake-jwt-token');
-        } else {
-          reject(new Error('Invalid credentials'));
-        }
-      }, 1000);
-    });
-  };

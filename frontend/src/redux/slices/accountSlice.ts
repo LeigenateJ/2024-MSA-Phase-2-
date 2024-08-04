@@ -11,6 +11,7 @@ interface Account {
 
 interface AccountsState {
   accounts: Account[];
+  currentAccount: Account | null;
 }
 
 const initialState: AccountsState = {
@@ -19,6 +20,7 @@ const initialState: AccountsState = {
     { id: '2', name: 'Savings Account', type: 'Savings', balance: 3000, userId: 'user1' },
     { id: '3', name: 'Credit Card', type: 'Credit', balance: -500, userId: 'user1' },
   ],
+  currentAccount: null,
 };
 
 const accountsSlice = createSlice({
@@ -37,9 +39,12 @@ const accountsSlice = createSlice({
     deleteAccount(state, action: PayloadAction<string>) {
       state.accounts = state.accounts.filter(account => account.id !== action.payload);
     },
+    setCurrentAccount(state, action: PayloadAction<Account | null>) {
+        state.currentAccount = action.payload;
+      },
   },
 });
 
-export const { addAccount, updateAccount, deleteAccount } = accountsSlice.actions;
+export const { addAccount, updateAccount, deleteAccount, setCurrentAccount  } = accountsSlice.actions;
 
 export default accountsSlice.reducer;
